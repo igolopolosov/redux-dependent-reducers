@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "declaration": true,
+    "target": "es5",
+    "removeComments": true,
+    "sourceMap": false,
+    "module": "commonjs",
+    "skipLibCheck": true,
+    "typeRoots": [
+      "node_modules/@types"
+    ]
+  },
+  "include": [
+    "lib/*",
+    "test/*"
+  ]
+}
