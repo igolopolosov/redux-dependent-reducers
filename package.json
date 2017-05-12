@@ -1,8 +1,9 @@
 {
   "name": "redux-dependent-reducers",
-  "version": "1.1.1",
+  "version": "1.5.0",
   "description": "Combine reducers dependent on evaluation order",
-  "main": "index.js",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
   "scripts": {
     "compile": "tsc",
     "precommit": "npm test && git add .",
