@@ -11,8 +11,8 @@ export declare class DependentReducers<T> {
     private reducersByActionType;
     private idCounter;
     private stateIdToKey;
-    private mapStateToDependencies(state);
-    createDependency<S, A = any, D = any>(dependencies: (ActionCreator<any> | DependentReducer<any>)[], reducerFn: (state: DeepReadonly<S>, action: DeepReadonly<Action<A>>, ...dependenciesValues: DeepReadonly<D>[]) => S): DependentReducer<S>;
+    private allDependencies;
+    createDependency<S, A = any, D = any>(dependencies: (ActionCreator<any> | DependentReducer<any>)[], reducerFn: (state: DeepReadonly<S>, action: DeepReadonly<Action<A>>, ...dependenciesValues: DeepReadonly<D>[]) => S, initialState: S): DependentReducer<S>;
     combine(stateShape: {
         [name: string]: DependentReducer<any>;
     }): (state: T, action: Action<any>, ...otherParams: any[]) => T;
@@ -28,6 +28,7 @@ export declare class DependentReducer<D> {
         reducerFn: (state: DeepReadonly<D>, action: DeepReadonly<Action<any>>, ...dependenciesValues: DeepReadonly<any>[]) => D;
         id: number;
         dependencies: any[];
+        initialState: D;
     });
     getRootActionTypes(): string[];
     getCurrentState(): DeepReadonly<D>;

@@ -8,7 +8,7 @@ export interface IDependentReducerFn<S> {
 
 export type DeepReadonly<T> = {
     readonly [P in keyof T]: DeepReadonly<T[P]>;
-    }
+}
 
 export function createContainer<T>() {
     return new DependentReducers<T>();
@@ -22,26 +22,22 @@ export class DependentReducers<T> {
     private stateIdToKey: {
         [id: number]: string
     };
-
-    private mapStateToDependencies(state: any) {
-        if (this.stateIdToKey) {
-            throw new Error('Already initialized');
-        }
-        return Object.keys(state).reduce((map, key) => {
-            map[state[key].id] = key;
-            return map;
-        }, <any> {});
-    }
+    private allDependencies: DependentReducer<any>[] = [];
 
     public createDependency<S, A = any, D = any>(dependencies: (ActionCreator<any> | DependentReducer<any>)[],
                                                  reducerFn: (state: DeepReadonly<S>,
                                                              action: DeepReadonly<Action<A>>,
-                                                             ...dependenciesValues: DeepReadonly<D>[]) => S): DependentReducer<S> {
+                                                             ...dependenciesValues: DeepReadonly<D>[]) => S,
+                                                 initialState: S): DependentReducer<S> {
         const dependentReducer = new DependentReducer<S>({
+            initialState,
             reducerFn,
             dependencies,
             id: this.idCounter++
         });
+
+        this.allDependencies.push(dependentReducer);
+
         dependentReducer.getRootActionTypes().forEach((actionType) => {
             if (!this.reducersByActionType.hasOwnProperty(actionType)) {
                 this.reducersByActionType[actionType] = [];
@@ -54,10 +50,23 @@ export class DependentReducers<T> {
     public combine(stateShape: {
                        [name: string]: DependentReducer<any>
                    }): (state: T, action: Action<any>, ...otherParams: any[]) => T {
-        this.stateIdToKey = this.mapStateToDependencies(stateShape);
+        if (this.stateIdToKey) {
+            throw new Error('Already initialized');
+        }
+        this.stateIdToKey = Object.keys(stateShape).reduce((map, key) => {
+            map[stateShape[key].id] = key;
+            return map;
+        }, <any> {});
 
         return (state: any, action: Action<any>) => {
-            if (this.reducersByActionType.hasOwnProperty(action.type)) {
+            if (action.type === '@@INIT') {
+                this.allDependencies.forEach(dependency => {
+                    const key = this.stateIdToKey[dependency.id];
+                    if (key) {
+                        state = {...state, [key]: dependency.getCurrentState()};
+                    }
+                });
+            } else if (this.reducersByActionType.hasOwnProperty(action.type)) {
                 this.reducersByActionType[action.type].forEach(dependency => {
                     const dependencyState = dependency.run(action);
                     const key = this.stateIdToKey[dependency.id];
@@ -91,14 +100,16 @@ export class DependentReducer<D> {
                                 ...dependenciesValues: DeepReadonly<any>[]) => D;
                     id: number;
                     dependencies: any[];
+                    initialState: D;
                 }) {
-        const {reducerFn, id, dependencies} = params;
+        const {reducerFn, id, dependencies, initialState} = params;
         this.reducerFn = reducerFn;
         this.id = id;
         this.rootActionTypes = getRootActionTypes(dependencies);
         this.dependencies = dependencies.filter(
             dependency => dependency instanceof DependentReducer
         );
+        this.currentState = <DeepReadonly<D>> <any> initialState;
     }
 
     public getRootActionTypes(): string[] {
@@ -116,7 +127,7 @@ export class DependentReducer<D> {
     public run(action: Action<any>): DeepReadonly<D> {
         this.previousState = this.currentState;
         const depsStates = this.dependencies.map(dep => dep.getCurrentState());
-        this.currentState = <any> this.reducerFn(this.previousState, action, ... depsStates);
+        this.currentState = <any> this.reducerFn(this.previousState, action, ...depsStates);
         return this.currentState;
     }
 }

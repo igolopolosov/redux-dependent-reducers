@@ -19,15 +19,14 @@ test('initial', t => {
             return state - action.payload;
         }
         return state;
-    });
+    }, 0);
 
-    const multiplyOrDivide = container.createDependency<number>([multiply], (state = 1, action: Action<number>) => {
+    const multiplyOrDivide = container.createDependency<number>([multiply], (state, action: Action<number>) => {
         return state * action.payload;
-    });
+    }, 1);
 
-    const sumAllOperators = container.createDependency<number>(
-        [plusOrMinus, multiplyOrDivide],
-        (state = 0, action, plusOrMinusValue: number, multiplyOrDivideValue: number) => {
+    const sumAllOperators = container.createDependency<number>([plusOrMinus, multiplyOrDivide],
+        (state, action, plusOrMinusValue: number, multiplyOrDivideValue: number) => {
             if (state > 100) {
                 throw Error();
             }
@@ -37,8 +36,7 @@ test('initial', t => {
                 return state + multiplyOrDivideValue;
             }
             return state;
-        }
-    );
+        }, 0);
 
     interface IState {
         plusOrMinus: number,
