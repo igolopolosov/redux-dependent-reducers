@@ -58,15 +58,16 @@ export class DependentReducers<T> {
             return map;
         }, <any> {});
 
+        let initialState = {};
+        this.allDependencies.forEach(dependency => {
+            const key = this.stateIdToKey[dependency.id];
+            if (key) {
+                initialState = {...initialState, [key]: dependency.getCurrentState()};
+            }
+        });
+
         return (state: any, action: Action<any>) => {
-            if (action.type === '@@INIT') {
-                this.allDependencies.forEach(dependency => {
-                    const key = this.stateIdToKey[dependency.id];
-                    if (key) {
-                        state = {...state, [key]: dependency.getCurrentState()};
-                    }
-                });
-            } else if (this.reducersByActionType.hasOwnProperty(action.type)) {
+            if (this.reducersByActionType.hasOwnProperty(action.type)) {
                 this.reducersByActionType[action.type].forEach(dependency => {
                     const dependencyState = dependency.run(action);
                     const key = this.stateIdToKey[dependency.id];
@@ -75,7 +76,9 @@ export class DependentReducers<T> {
                     }
                 })
             }
-            return state;
+            return state !== undefined
+                ? state
+                : initialState;
         };
     }
 }

@@ -1,6 +1,6 @@
 {
   "name": "redux-dependent-reducers",
-  "version": "1.5.1",
+  "version": "1.5.2",
   "description": "Combine reducers dependent on evaluation order",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
